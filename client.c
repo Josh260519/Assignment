@@ -1,82 +1,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
-
-#define PORT 8484
 #define BUFFER_SIZE 1024
-#define RESPONSE_SIZE 2048
-
-void handleClient(int clientSocket) {
-    char buffer[BUFFER_SIZE];
-    int bytesRead;
-
-    while ((bytesRead = recv(clientSocket, buffer, BUFFER_SIZE - 1, 0)) > 0) {
-        buffer[bytesRead] = '\0';
-
-        // Get the current date and time
-        time_t now = time(NULL);
-        struct tm *tm = localtime(&now);
-        char datetime[128];
-        strftime(datetime, sizeof(datetime), "%d %B %Y, %H:%M", tm);
-
-        // Combine incoming text with server's current date and time
-        char response[RESPONSE_SIZE];
-        snprintf(response, sizeof(response), "Text from client received at %s: %s", datetime, buffer);
-
-        // Send the response back to the client
-        send(clientSocket, response, strlen(response), 0);
-    }
-
-    close(clientSocket);
-}
 
 int main() {
-    int serverSocket, clientSocket;
-    struct sockaddr_in serverAddress, clientAddress;
-    socklen_t clientAddressLength = sizeof(clientAddress);
+    char serverIP[16];
+    int serverPort;
+    char userInput[BUFFER_SIZE];
+
+    printf("Enter the server IP address: ");
+    scanf("%s", serverIP);
+
+    printf("Enter the server port number: ");
+    scanf("%d", &serverPort);
 
     // Create a socket
-    if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (clientSocket == -1) {
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
 
     // Set up server address
+    struct sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(PORT);
-    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    serverAddress.sin_port = htons(serverPort);
+    serverAddress.sin_addr.s_addr = inet_addr(serverIP);
 
-    // Bind the socket to the specified IP and port
-    if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
-        perror("Socket binding failed");
+    // Connect to the server
+    if (connect(clientSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
+        perror("Connection failed");
         exit(EXIT_FAILURE);
     }
 
-    // Listen for incoming connections
-    if (listen(serverSocket, 5) == -1) {
-        perror("Listen failed");
-        exit(EXIT_FAILURE);
+    printf("Connected to the server.\n");
+
+    printf("Enter a text to send to the server: ");
+    scanf(" %[^\n]", userInput);
+
+    // Send user input to the server
+    send(clientSocket, userInput, strlen(userInput), 0);
+
+    // Receive and print the server's response
+    char buffer[BUFFER_SIZE];
+    int bytesRead = recv(clientSocket, buffer, BUFFER_SIZE - 1, 0);
+    if (bytesRead > 0) {
+        buffer[bytesRead] = '\0';
+        printf("Server response: %s\n", buffer);
     }
 
-    printf("Server listening on port %d...\n", PORT);
-
-    // Accept and handle client connections
-    while (1) {
-        // Accept a new connection
-        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientAddressLength);
-
-        if (clientSocket == -1) {
-            perror("Accept failed");
-            exit(EXIT_FAILURE);
-        }
-
-        // Handle the client in a separate function
-        handleClient(clientSocket);
-    }
+    // Close the socket
+    close(clientSocket);
 
     return 0;
 }
