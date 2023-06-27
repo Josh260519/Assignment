@@ -5,7 +5,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <stdbool.h>
 #define BUFFER_SIZE 1024
+
 
 int main() {
     char serverIP[16];
@@ -17,6 +19,8 @@ int main() {
 
     printf("Enter the server port number: ");
     scanf("%d", &serverPort);
+
+
 
     // Create a socket
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -39,8 +43,13 @@ int main() {
 
     printf("Connected to the server.\n");
 
-    printf("Enter a text to send to the server: ");
+ while (1){
+    printf("Enter a text to send to the server(or type exit to terminate): ");
     scanf(" %[^\n]", userInput);
+
+    if (strcmp(userInput, "exit") == 0){
+	break;
+	}
 
     // Send user input to the server
     send(clientSocket, userInput, strlen(userInput), 0);
@@ -52,9 +61,11 @@ int main() {
         buffer[bytesRead] = '\0';
         printf("Server response: %s\n", buffer);
     }
-
+}
     // Close the socket
     close(clientSocket);
 
+
     return 0;
 }
+

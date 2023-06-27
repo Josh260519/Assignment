@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define PORT 8484
 #define BUFFER_SIZE 1024
@@ -23,8 +24,7 @@ void handleClient(int clientSocket) {
         char datetime[128];
         strftime(datetime, sizeof(datetime), "%d %B %Y, %H:%M", tm);
 
-	printf("Received message from client: %s\n", buffer);
-
+        printf("Received message from client: %s\n", buffer);
 
         // Combine incoming text with server's current date and time
         char response[RESPONSE_SIZE];
@@ -33,16 +33,24 @@ void handleClient(int clientSocket) {
         // Send the response back to the client
         send(clientSocket, response, strlen(response), 0);
 
-	printf("Sent response to client: %s\n", response);
+        printf("Sent response to client: %s\n", response);
     }
 
     close(clientSocket);
+}
+
+void *clientThread(void *arg) {
+    int clientSocket = *((int *)arg);
+    handleClient(clientSocket);
+    free(arg);
+    return NULL;
 }
 
 int main() {
     int serverSocket, clientSocket;
     struct sockaddr_in serverAddress, clientAddress;
     socklen_t clientAddressLength = sizeof(clientAddress);
+    pthread_t tid;
 
     // Create a socket
     if ((serverSocket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -79,8 +87,21 @@ int main() {
             exit(EXIT_FAILURE);
         }
 
-        // Handle the client in a separate function
-        handleClient(clientSocket);
+        // Allocate memory for the argument to be passed to the thread
+        int *clientSocketPtr = (int *)malloc(sizeof(int));
+        *clientSocketPtr = clientSocket;
+
+        // Create a new thread to handle the client
+        if (pthread_create(&tid, NULL, clientThread, clientSocketPtr) != 0) {
+            perror("Thread creation failed");
+            exit(EXIT_FAILURE);
+        }
+
+        // Detach the thread to clean up resources automatically
+        if (pthread_detach(tid) != 0) {
+            perror("Thread detachment failed");
+            exit(EXIT_FAILURE);
+        }
     }
 
     return 0;
