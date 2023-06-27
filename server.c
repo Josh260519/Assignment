@@ -23,6 +23,9 @@ void handleClient(int clientSocket) {
         char datetime[128];
         strftime(datetime, sizeof(datetime), "%d %B %Y, %H:%M", tm);
 
+	printf("Received message from client/n");
+
+
         // Combine incoming text with server's current date and time
         char response[RESPONSE_SIZE];
         snprintf(response, sizeof(response), "Text from client received at %s: %s", datetime, buffer);
