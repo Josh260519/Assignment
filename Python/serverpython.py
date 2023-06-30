@@ -1,9 +1,9 @@
 import socket
 import threading
 
-# Define the host and port to listen on
-host = '192.168.17.128'  # Change this to your desired host
-port = 8484  # Change this to your desired port
+# Defining host and port to listen for connections
+host = '192.168.17.128'  # IP Address of host
+port = 8484  # Port to listen to
 
 def handle_client(client_socket, client_address):
     # Receive data from the client
@@ -24,7 +24,7 @@ def main():
     # Create a socket object
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    # Set the SO_REUSEADDR option
+    # Enabling SO_REUSEADDR option
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     # Bind the socket to the host and port
@@ -40,7 +40,7 @@ def main():
         client_socket, client_address = sock.accept()
         print("Connected to {}:{}".format(client_address[0], client_address[1]))
 
-        # Create a new thread to handle the client
+        # Creates a thread to handle the client
         client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
         client_thread.start()
 
