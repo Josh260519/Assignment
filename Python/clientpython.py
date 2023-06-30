@@ -4,7 +4,7 @@ import socket
 server_ip = input("Enter the server IP address: ")
 server_port = int(input("Enter the server port number: "))
 
-# Create a TCP/IP socket
+# Creates a socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Connect to the server
@@ -16,6 +16,7 @@ while True:
     user_input = input("Enter a string (or press 'Q' to quit): ")
 
     # Break the loop if 'Q' or 'q' is entered
+    # lower() to ignore case sensitivity
     if user_input.lower() == 'q':
         break
 
@@ -25,7 +26,7 @@ while True:
     # Receive the reply from the server
     reply = client_socket.recv(1024).decode('utf-8')
 
-    # Print the reply
+    # Print out the reply
     print("Reply from server:", reply)
 
 # Close the connection
