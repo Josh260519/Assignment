@@ -24,6 +24,8 @@ def main():
     # Create a socket object
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
     # Bind the socket to the host and port
     sock.bind((host, port))
 
