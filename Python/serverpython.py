@@ -1,5 +1,6 @@
 import socket
 import threading
+import datetime
 
 # Defining host and port to listen for connections
 host = '192.168.17.128'  # IP Address of host
@@ -13,8 +14,12 @@ def handle_client(client_socket, client_address):
             break
         print("Received data from {}: {}: {}".format(client_address[0], client_address[1], data))
 
-        # Echo the received data back to the client
-        client_socket.sendall(data.encode('utf-8'))
+        # Combine the client's response with the current date and time
+        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        response = "[{}] {}".format(current_datetime, data)
+
+        # Echo the modified response back to the client
+        client_socket.sendall(response.encode('utf-8'))
 
     # Close the client socket
     client_socket.close()
