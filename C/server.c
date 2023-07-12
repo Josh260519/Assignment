@@ -6,10 +6,13 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 
 #define PORT 8484
 #define BUFFER_SIZE 1024
 #define RESPONSE_SIZE 2048
+
+int serverSocket;
 
 void handleClient(int clientSocket) {
     char buffer[BUFFER_SIZE];
@@ -46,8 +49,14 @@ void *clientThread(void *arg) {
     return NULL;
 }
 
+void sigintHandler(int signum) {
+    printf("\nTerminating the server...\n");
+    close(serverSocket);
+    exit(EXIT_SUCCESS);
+}
+
 int main() {
-    int serverSocket, clientSocket;
+    int clientSocket;
     struct sockaddr_in serverAddress, clientAddress;
     socklen_t clientAddressLength = sizeof(clientAddress);
     pthread_t tid;
@@ -76,6 +85,9 @@ int main() {
     }
 
     printf("Server listening on port %d...\n", PORT);
+
+    // Register SIGINT signal handler
+    signal(SIGINT, sigintHandler);
 
     // Accept and handle client connections
     while (1) {
